@@ -6,7 +6,9 @@ const COOKIE_NAME = 'refreshToken';
 const getCookieOptions = () => ({
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  // 'none' is required for cross-origin requests (client & server on different domains).
+  // 'none' MUST be paired with secure: true, which is enforced in production above.
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 });
 
@@ -76,7 +78,7 @@ export const logout = async (req, res, next) => {
     res.clearCookie(COOKIE_NAME, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     });
 
     if (req.user) {

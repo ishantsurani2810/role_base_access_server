@@ -51,6 +51,15 @@ app.use('/api', generalLimiter);
 // API Version Mount
 app.use('/api/v1', apiRouter);
 
+// Health check endpoint for deployment platforms (Vercel, Render, Railway, etc.)
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    environment: config.nodeEnv,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Catch-all for unhandled routes
 app.all('*', (req, res, next) => {
   next(new NotFoundError(`Route ${req.method} ${req.originalUrl} not found on this server.`));

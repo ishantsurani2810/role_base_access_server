@@ -38,6 +38,15 @@ const startServer = async () => {
       process.exit(1);
     });
   });
+
+  // Graceful shutdown for containerised environments (Docker, Kubernetes, Render, Railway)
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received. Closing server gracefully...');
+    server.close(() => {
+      logger.info('Server closed. Exiting process.');
+      process.exit(0);
+    });
+  });
 };
 
 startServer();

@@ -21,7 +21,11 @@ const formatMongoUri = (uri) => {
 export const connectDatabase = async () => {
   try {
     const formattedUri = formatMongoUri(config.mongodbUri);
-    const conn = await mongoose.connect(formattedUri);
+    const conn = await mongoose.connect(formattedUri, {
+      maxPoolSize: 10,                  // max concurrent connections
+      serverSelectionTimeoutMS: 10000,  // 10s to find a server
+      socketTimeoutMS: 45000            // 45s before idle socket closes
+    });
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
     
     // Register event listeners
