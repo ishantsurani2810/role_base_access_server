@@ -1,6 +1,31 @@
+# Dependencies
 node_modules/
+
+# Environment variables
 .env
+.env.local
+.env.*.local
+
+# Build output
 dist/
 build/
-coverage/
+
+# Logs
 *.log
+logs/
+npm-debug.log*
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Test coverage
+coverage/
+
+# PM2 runtime
+.pm2/
