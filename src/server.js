@@ -1,17 +1,11 @@
 import app from './app.js';
 import { config } from '../config/environment.js';
-import { connectDatabase } from '../config/db.js';
-import { seedRolesAndAdminAccount } from '../services/user.service.js';
 import logger from '../utils/logger.js';
 
 const startServer = async () => {
-  // 1. Establish database connection
-  await connectDatabase();
-
-  // 2. Perform database seeding (roles, root admin)
-  await seedRolesAndAdminAccount();
-
-  // 3. Hear on configured port
+  // DB connection + seeding is handled lazily by the connectDatabase middleware
+  // in app.js on the first request. This works on both traditional servers and
+  // serverless platforms (Vercel) where listen() may not be called by the runtime.
   const server = app.listen(config.port, () => {
     logger.info(`=========================================`);
     logger.info(`SERVER RUNNING IN ${config.nodeEnv.toUpperCase()} MODE`);
@@ -20,11 +14,9 @@ const startServer = async () => {
     logger.info(`=========================================`);
   });
 
-  // Handle uncaught exceptions and rejections
   process.on('unhandledRejection', (err) => {
     logger.error('UNHANDLED REJECTION! Shutting down server gracefully...');
     logger.error(`${err.name}: ${err.message}\nStack: ${err.stack}`);
-    
     server.close(() => {
       process.exit(1);
     });
@@ -33,7 +25,6 @@ const startServer = async () => {
   process.on('uncaughtException', (err) => {
     logger.error('UNCAUGHT EXCEPTION! Shutting down server gracefully...');
     logger.error(`${err.name}: ${err.message}\nStack: ${err.stack}`);
-    
     server.close(() => {
       process.exit(1);
     });

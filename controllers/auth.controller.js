@@ -1,5 +1,6 @@
 import * as authService from '../services/auth.service.js';
 import { AuditLog } from '../models/audit.model.js';
+import logger from '../utils/logger.js';
 
 const COOKIE_NAME = 'refreshToken';
 
@@ -20,15 +21,15 @@ export const login = async (req, res, next) => {
     // Set cookie
     res.cookie(COOKIE_NAME, refreshToken, getCookieOptions());
 
-    // Write audit log
-    await AuditLog.create({
+    // Fire-and-forget audit log — must never block or crash the login response
+    AuditLog.create({
       actorId: user._id,
       action: 'USER_LOGIN_SUCCESS',
       module: 'Authentication',
       details: { email: user.email },
       ipAddress: req.ip,
       userAgent: req.headers['user-agent']
-    });
+    }).catch((auditErr) => logger.error(`Audit log failed (login success): ${auditErr.message}`));
 
     res.status(200).json({
       status: 'success',
@@ -38,14 +39,15 @@ export const login = async (req, res, next) => {
       }
     });
   } catch (err) {
-    // Write failed audit log
-    await AuditLog.create({
+    // Fire-and-forget — audit log failure must not mask the real auth error
+    AuditLog.create({
       action: 'USER_LOGIN_FAILED',
       module: 'Authentication',
       details: { email: req.body.email, error: err.message },
       ipAddress: req.ip,
       userAgent: req.headers['user-agent']
-    });
+    }).catch((auditErr) => logger.error(`Audit log failed (login failed): ${auditErr.message}`));
+
     next(err);
   }
 };
@@ -82,13 +84,13 @@ export const logout = async (req, res, next) => {
     });
 
     if (req.user) {
-      await AuditLog.create({
+      AuditLog.create({
         actorId: req.user._id,
         action: 'USER_LOGOUT',
         module: 'Authentication',
         ipAddress: req.ip,
         userAgent: req.headers['user-agent']
-      });
+      }).catch((auditErr) => logger.error(`Audit log failed (logout): ${auditErr.message}`));
     }
 
     res.status(200).json({
